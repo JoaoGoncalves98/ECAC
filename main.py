@@ -52,15 +52,23 @@ def create_file(loan_id,results):
         f.write("\n"+str(i)+","+str(j))
     f.close()
 
+def test_accuracy(values):
+    train_x, train_y, test_x, test_y = train_split_random(values)
+    preds = list(apply_gaussian(train_x, train_y, test_x))
+    print("\nsplit random accuracy: " + str(accuracy_score(test_y, preds)))
+
+    train_x, train_y, test_x, test_y = train_predict_96(values)
+    preds = list(apply_gaussian(train_x, train_y, test_x))
+    print("using previous years accuracy: " + str(accuracy_score(test_y, preds))+ "\n")
+
+def submission(values):
+    train_x, train_y, test_x, test_y, loan_id = get_test_values(values)
+    preds = list(apply_gaussian(train_x, train_y, test_x))
+    create_file(loan_id,preds)
+
 # _____________________________________________________________________________________________________________
 
 values = get_train_values()
 
-# train_x, train_y, test_x, test_y = train_split_random(values)
-train_x, train_y, test_x, test_y = train_predict_96(values)
-# train_x, train_y, test_x, test_y, loan_id = get_test_values(values)
-
-preds = list(apply_gaussian(train_x, train_y, test_x))
-
-print(accuracy_score(test_y, preds))
-# create_file(loan_id,preds)
+# test_accuracy(values) # Tests accuracy by using train file for train+test
+submission(values) # Creates submission file to be submited
