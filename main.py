@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 import numpy as np
 import pandas as pd
@@ -5,6 +7,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
@@ -24,7 +27,15 @@ def get_test_values(values):
     test_y = heart.iloc[:,6]
     test_x = heart.iloc[:,:6]
     loan_id = list(heart.iloc[:,0])
-    return (train_x, train_y, test_x, test_y, loan_id)
+    account_ids = list(heart.iloc[:,1])
+    return (train_x, train_y, test_x, test_y, loan_id, account_ids)
+
+def get_accounts_negative_balance(file):
+    heart = pd.read_csv(file, sep=';', header=0)
+    heart.head()
+    values = heart[heart['balance'] < 0]
+    accounts_id = list(dict.fromkeys(values.iloc[:,1]))
+    return accounts_id
 
 def train_split_random(values):
     values_y = values.iloc[:,6]
@@ -57,10 +68,15 @@ def apply_logisticRegression(train_x, train_y, test_x): # Logistic regression
     model = lrc.fit(train_x, train_y)
     return lrc.predict(test_x)
 
-def apply_KNeighborsClassifier(train_x, train_y, test_x): # k-nearest neighbors
+def apply_kNeighborsClassifier(train_x, train_y, test_x): # k-nearest neighbors
     knc = KNeighborsClassifier(n_neighbors=3)
     model = knc.fit(train_x, train_y)
     return knc.predict(test_x)
+
+def apply_randomForestClassifier(train_x, train_y, test_x): # k-nearest neighbors
+    clf=RandomForestClassifier(max_depth=2, random_state=0)
+    model = clf.fit(train_x, train_y)
+    return clf.predict(test_x)
 
 def create_file(loan_id,results):
     os.chdir('..')
@@ -71,17 +87,34 @@ def create_file(loan_id,results):
     f.close()
 
 def test_accuracy(values):
+    neg_accounts = get_accounts_negative_balance('trans_train.csv')
+
     train_x, train_y, test_x, test_y = train_split_random(values)
-    preds = list(apply_svc(train_x, train_y, test_x))
+    account_ids = list(test_x.iloc[:,1])
+    st = set(neg_accounts)
+    indexes = [i for i, e in enumerate(account_ids) if e in st]
+    preds = list(apply_randomForestClassifier(train_x, train_y, test_x))
+    for idx in indexes:
+        preds[idx]=-1
     print("\nsplit random accuracy: " + str(accuracy_score(test_y, preds)))
 
     train_x, train_y, test_x, test_y = train_predict_96(values)
-    preds = list(apply_svc(train_x, train_y, test_x))
+    account_ids = list(test_x.iloc[:,1])
+    st = set(neg_accounts)
+    indexes = [i for i, e in enumerate(account_ids) if e in st]
+    preds = list(apply_randomForestClassifier(train_x, train_y, test_x))
+    for idx in indexes:
+        preds[idx]=-1
     print("using previous years accuracy: " + str(accuracy_score(test_y, preds))+ "\n")
 
 def submission(values):
-    train_x, train_y, test_x, test_y, loan_id = get_test_values(values)
+    train_x, train_y, test_x, test_y, loan_id, account_ids = get_test_values(values)
+    neg_accounts = get_accounts_negative_balance('trans_test.csv')    
+    st = set(neg_accounts)
+    indexes = [i for i, e in enumerate(account_ids) if e in st]
     preds = list(apply_gaussian(train_x, train_y, test_x))
+    for idx in indexes:
+        preds[idx]=-1
     create_file(loan_id,preds)
 
 # _____________________________________________________________________________________________________________
