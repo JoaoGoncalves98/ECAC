@@ -11,6 +11,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import roc_auc_score
 import csv
 
 def get_train_values():
@@ -42,15 +43,6 @@ def train_split_random(values):
     values_x = values.iloc[:,:6]
     train_y, test_y = train_test_split(values_y, test_size=0.25, random_state=0, shuffle=True)
     train_x, test_x = train_test_split(values_x, test_size=0.25, random_state=0, shuffle=True)
-    return(train_x, train_y, test_x, test_y)
-
-def train_predict_96(values):
-    values_train=values[(values['date'] > 930000) & (values['date'] < 960000)]
-    values_test=values[values['date'] > 960000]
-    train_y = values_train.iloc[:,6]
-    train_x = values_train.iloc[:,:6]
-    test_y = values_test.iloc[:,6]
-    test_x = values_test.iloc[:,:6]
     return(train_x, train_y, test_x, test_y)
 
 def apply_gaussian(train_x, train_y, test_x): # Naive Bayes
@@ -96,16 +88,8 @@ def test_accuracy(values):
     preds = list(apply_randomForestClassifier(train_x, train_y, test_x))
     for idx in indexes:
         preds[idx]=-1
-    print("\nsplit random accuracy: " + str(accuracy_score(test_y, preds)))
+    print("\nauc score: " + str(roc_auc_score(test_y, preds))+ "\n")
 
-    train_x, train_y, test_x, test_y = train_predict_96(values)
-    account_ids = list(test_x.iloc[:,1])
-    st = set(neg_accounts)
-    indexes = [i for i, e in enumerate(account_ids) if e in st]
-    preds = list(apply_randomForestClassifier(train_x, train_y, test_x))
-    for idx in indexes:
-        preds[idx]=-1
-    print("using previous years accuracy: " + str(accuracy_score(test_y, preds))+ "\n")
 
 def submission(values):
     train_x, train_y, test_x, test_y, loan_id, account_ids = get_test_values(values)
