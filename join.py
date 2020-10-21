@@ -8,7 +8,7 @@ def create_table_train(conn, c):
     c.execute('''CREATE TABLE ALL_LOANS_TRAIN
              (loan_id INTEGER PRIMARY KEY,
              account_id integer,
-             date text, 
+             date date, 
              amount integer, 
              duration integer, 
              payments integer, 
@@ -24,7 +24,7 @@ def create_table_test(conn, c):
     c.execute('''CREATE TABLE ALL_LOANS_TEST
              (loan_id INTEGER PRIMARY KEY,
              account_id integer,
-             date text, 
+             date date, 
              amount integer, 
              duration integer, 
              payments integer, 
@@ -39,7 +39,7 @@ def create_table_test(conn, c):
 def queries_train(c):
 
     c.execute('''
-    CREATE VIEW trans_info AS 
+    CREATE VIEW IF NOT EXISTS trans_info AS 
     SELECT TRANS_TRAIN.account_id as account_id, COUNT(TRANS_TRAIN.account_id) as number_trans, CAST(AVG(TRANS_TRAIN.balance) as INTEGER) as avg_bal, CAST(MIN(TRANS_TRAIN.balance) as INTEGER) as min_bal, CAST(MAX(TRANS_TRAIN.balance) as INTEGER) as max_bal
     FROM TRANS_TRAIN
     GROUP BY TRANS_TRAIN.account_id
@@ -90,6 +90,28 @@ def convert_train():
     read_trans = pd.read_csv ('trans_train.csv', sep=';')
     read_trans.head()
     read_trans.to_sql('TRANS_TRAIN', conn, if_exists='append', index = False)
+
+    read_acc = pd.read_csv ('account.csv', sep=';')
+    read_acc.head()
+    read_acc.to_sql('ACCOUNT', conn, if_exists='append', index = False)
+
+    read_cards = pd.read_csv ('card_train.csv', sep=';')
+    read_cards.head()
+    read_cards.to_sql('CARD_TRAIN', conn, if_exists='append', index = False)
+
+    read_clients = pd.read_csv ('client.csv', sep=';')
+    read_clients.head()
+    read_clients.to_sql('CLIENT', conn, if_exists='append', index = False)
+
+    read_disp = pd.read_csv ('disp.csv', sep=';')
+    read_disp.head()
+    read_disp.to_sql('DISP', conn, if_exists='append', index = False)
+
+    read_dist = pd.read_csv ('district.csv', sep=';')
+    print(read_dist.columns)
+    read_dist.head()
+    read_dist.to_sql('DISTRICT', conn, if_exists='append', index = False)
+    
 
     queries_train(c)
 
