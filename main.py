@@ -16,17 +16,17 @@ import csv
 
 def get_train_values():
     os.chdir('data')
-    heart = pd.read_csv('loan_train.csv', sep=';', header=0)
+    heart = pd.read_csv('gerado_train.csv', sep=',', header=0)
     heart.head()
     return heart
     
 def get_test_values(values):
-    heart = pd.read_csv('loan_test.csv', sep=';', header=0)
+    heart = pd.read_csv('gerado_test.csv', sep=',', header=0)
     heart.head()
-    train_y = values.iloc[:,6]
-    train_x = values.iloc[:,:6]
-    test_y = heart.iloc[:,6]
-    test_x = heart.iloc[:,:6]
+    train_y = values.iloc[:,10]
+    train_x = values.iloc[:,:10]
+    test_y = heart.iloc[:,10]
+    test_x = heart.iloc[:,:10]
     loan_id = list(heart.iloc[:,0])
     account_ids = list(heart.iloc[:,1])
     return (train_x, train_y, test_x, test_y, loan_id, account_ids)
@@ -39,8 +39,8 @@ def get_accounts_negative_balance(file):
     return accounts_id
 
 def train_split_random(values):
-    values_y = values.iloc[:,6]
-    values_x = values.iloc[:,:6]
+    values_y = values.iloc[:,10]
+    values_x = values.iloc[:,:10]
     train_y, test_y = train_test_split(values_y, test_size=0.25, random_state=0, shuffle=True)
     train_x, test_x = train_test_split(values_x, test_size=0.25, random_state=0, shuffle=True)
     return(train_x, train_y, test_x, test_y)
@@ -96,7 +96,7 @@ def submission(values):
     neg_accounts = get_accounts_negative_balance('trans_test.csv')    
     st = set(neg_accounts)
     indexes = [i for i, e in enumerate(account_ids) if e in st]
-    preds = list(apply_gaussian(train_x, train_y, test_x))
+    preds = list(apply_randomForestClassifier(train_x, train_y, test_x))
     for idx in indexes:
         preds[idx]=-1
     create_file(loan_id,preds)
