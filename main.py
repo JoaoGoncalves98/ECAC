@@ -106,4 +106,4 @@ def submission(values):
 values = get_train_values()
 
 test_accuracy(values) # Tests accuracy by using train file for train+test
-# submission(values) # Creates submission file to be submited
+submission(values) # Creates submission file to be submited

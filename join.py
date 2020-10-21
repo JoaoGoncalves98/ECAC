@@ -37,12 +37,19 @@ def create_table_test(conn, c):
 
 
 def queries_train(c):
+
+    c.execute('''
+    CREATE VIEW trans_info AS 
+    SELECT TRANS_TRAIN.account_id as account_id, COUNT(TRANS_TRAIN.account_id) as number_trans, CAST(AVG(TRANS_TRAIN.balance) as INTEGER) as avg_bal, CAST(MIN(TRANS_TRAIN.balance) as INTEGER) as min_bal, CAST(MAX(TRANS_TRAIN.balance) as INTEGER) as max_bal
+    FROM TRANS_TRAIN
+    GROUP BY TRANS_TRAIN.account_id
+    ''')
+
     c.execute('''
     INSERT INTO ALL_LOANS_TRAIN (loan_id,account_id,date,amount,duration,payments,number_trans,avg_bal,min_bal,max_bal,status) 
-    SELECT DISTINCT lns.loan_id, lns.account_id, lns.date, lns.amount, lns.duration, lns.payments, COUNT(TRANS_TRAIN.account_id), CAST(AVG(TRANS_TRAIN.balance) as INTEGER), CAST(MIN(TRANS_TRAIN.balance) as INTEGER), CAST(MAX(TRANS_TRAIN.balance) as INTEGER), lns.status
-    FROM LOANS_TRAIN lns
-    LEFT JOIN TRANS_TRAIN ON TRANS_TRAIN.account_id = lns.account_id
-    GROUP BY TRANS_TRAIN.account_id;
+    SELECT DISTINCT lns.loan_id, lns.account_id, lns.date, lns.amount, lns.duration, lns.payments, trs.number_trans, trs.avg_bal, trs.min_bal, trs.max_bal, lns.status
+    FROM LOANS_TRAIN lns, trans_info trs
+    WHERE lns.account_id=trs.account_id
     ''')
 
     c.execute('''
@@ -52,11 +59,17 @@ def queries_train(c):
 
 def queries_test(c):
     c.execute('''
+    CREATE VIEW trans_info AS 
+    SELECT TRANS_TEST.account_id as account_id, COUNT(TRANS_TEST.account_id) as number_trans, CAST(AVG(TRANS_TEST.balance) as INTEGER) as avg_bal, CAST(MIN(TRANS_TEST.balance) as INTEGER) as min_bal, CAST(MAX(TRANS_TEST.balance) as INTEGER) as max_bal
+    FROM TRANS_TEST
+    GROUP BY TRANS_TEST.account_id
+    ''')
+
+    c.execute('''
     INSERT INTO ALL_LOANS_TEST (loan_id,account_id,date,amount,duration,payments,number_trans,avg_bal,min_bal,max_bal,status) 
-    SELECT DISTINCT lns.loan_id, lns.account_id, lns.date, lns.amount, lns.duration, lns.payments, COUNT(TRANS_TEST.account_id), CAST(AVG(TRANS_TEST.balance) as INTEGER), CAST(MIN(TRANS_TEST.balance) as INTEGER), CAST(MAX(TRANS_TEST.balance) as INTEGER), lns.status
-    FROM LOANS_TEST lns
-    LEFT JOIN TRANS_TEST ON TRANS_TEST.account_id = lns.account_id
-    GROUP BY TRANS_TEST.account_id;
+    SELECT DISTINCT lns.loan_id, lns.account_id, lns.date, lns.amount, lns.duration, lns.payments, trs.number_trans, trs.avg_bal, trs.min_bal, trs.max_bal, lns.status
+    FROM LOANS_TEST lns, trans_info trs
+    WHERE lns.account_id=trs.account_id
     ''')
     
     c.execute('''
