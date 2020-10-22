@@ -9,38 +9,41 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
+from sklearn.feature_selection import RFECV
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import roc_auc_score
+from imblearn.over_sampling import SMOTE
+from collections import Counter
 import csv
 
 def get_train_values():
     os.chdir('data')
-    heart = pd.read_csv('gerado_train.csv', sep=',', header=0)
+    heart = pd.read_csv('gerado_train.csv', sep=',', header=0, low_memory=False)
     heart.head()
     return heart
     
 def get_test_values(values):
-    heart = pd.read_csv('gerado_test.csv', sep=',', header=0)
+    heart = pd.read_csv('gerado_test.csv', sep=',', header=0, low_memory=False)
     heart.head()
-    train_y = values.iloc[:,14]
-    train_x = values.iloc[:,:14]
-    test_y = heart.iloc[:,14]
-    test_x = heart.iloc[:,:14]
+    train_y = values.iloc[:,15]
+    train_x = values.iloc[:,:15]
+    test_y = heart.iloc[:,15]
+    test_x = heart.iloc[:,:15]
     loan_id = list(heart.iloc[:,0])
     account_ids = list(heart.iloc[:,1])
     return (train_x, train_y, test_x, test_y, loan_id, account_ids)
 
 def get_accounts_negative_balance(file):
-    heart = pd.read_csv(file, sep=';', header=0)
+    heart = pd.read_csv(file, sep=';', header=0, low_memory=False)
     heart.head()
     values = heart[heart['balance'] < 0]
     accounts_id = list(dict.fromkeys(values.iloc[:,1]))
     return accounts_id
 
 def train_split_random(values):
-    values_y = values.iloc[:,14]
-    values_x = values.iloc[:,:14]
+    values_y = values.iloc[:,15]
+    values_x = values.iloc[:,:15]
     train_y, test_y = train_test_split(values_y, test_size=0.25, random_state=0, shuffle=True)
     train_x, test_x = train_test_split(values_x, test_size=0.25, random_state=0, shuffle=True)
     return(train_x, train_y, test_x, test_y)
@@ -66,9 +69,13 @@ def apply_kNeighborsClassifier(train_x, train_y, test_x): # k-nearest neighbors
     return knc.predict(test_x)
 
 def apply_randomForestClassifier(train_x, train_y, test_x): # k-nearest neighbors
-    clf=RandomForestClassifier(max_depth=2, random_state=0)
-    model = clf.fit(train_x, train_y)
-    return clf.predict(test_x)
+    loop = 0
+    smt = SMOTE()
+    train_x_SMOTE, train_y_SMOTE = smt.fit_resample(train_x, train_y)
+    clf=RandomForestClassifier(n_estimators=20)
+    selector = RFECV(clf, scoring='roc_auc')
+    selector.fit(train_x_SMOTE, train_y_SMOTE)
+    return selector.predict(test_x)
 
 def create_file(loan_id,results):
     os.chdir('..')

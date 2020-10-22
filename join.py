@@ -16,6 +16,7 @@ def create_table_train(conn, c):
              avg_bal integer,
              min_bal integer,
              max_bal integer,
+             dist_id integer,
              dist_avg_salary integer,
              dist_crimes_95 integer,
              dist_crimes_96 integer,
@@ -36,6 +37,7 @@ def create_table_test(conn, c):
              avg_bal integer,
              min_bal integer,
              max_bal integer,
+             dist_id integer,
              dist_avg_salary integer,
              dist_crimes_95 integer,
              dist_crimes_96 integer,
@@ -54,8 +56,8 @@ def queries_train(c):
     ''')
 
     c.execute('''
-    CREATE VIEW IF NOT EXISTS dristrict_info AS 
-    SELECT acc.account_id as account_id, dist.average_salary as dist_avg_salary, dist.no_of_commited_crimes_95 as dist_crimes_95, dist.no_of_commited_crimes_96 as dist_crimes_96 
+    CREATE VIEW IF NOT EXISTS district_info AS 
+    SELECT acc.account_id as account_id, dist.code as dist_id, dist.average_salary as dist_avg_salary, dist.no_of_commited_crimes_95 as dist_crimes_95, dist.no_of_commited_crimes_96 as dist_crimes_96 
     FROM ACCOUNT acc, DISTRICT dist
     WHERE acc.district_id=dist.code
     ''')
@@ -68,10 +70,10 @@ def queries_train(c):
     ''')
 
     c.execute('''
-    INSERT INTO ALL_LOANS_TRAIN (loan_id,account_id,date,amount,duration,payments,number_trans,avg_bal,min_bal,max_bal,dist_avg_salary,dist_crimes_95,dist_crimes_96,client_birth_year,status) 
-    SELECT DISTINCT lns.loan_id, lns.account_id, lns.date, lns.amount, lns.duration, lns.payments, trs.number_trans, trs.avg_bal, trs.min_bal, trs.max_bal, drs.dist_avg_salary, drs.dist_crimes_95, drs.dist_crimes_96, cli.client_birth_year, lns.status
-    FROM LOANS_TRAIN lns, trans_info trs, dristrict_info drs, client_info cli
-    WHERE lns.account_id=trs.account_id AND lns.account_id=drs.account_id AND lns.account_id=cli.account_id
+    INSERT INTO ALL_LOANS_TRAIN (loan_id,account_id,date,amount,duration,payments,number_trans,avg_bal,min_bal,max_bal,dist_id,dist_avg_salary,dist_crimes_95,dist_crimes_96,client_birth_year,status) 
+    SELECT DISTINCT lns.loan_id, lns.account_id, lns.date, lns.amount, lns.duration, lns.payments, trs.number_trans, trs.avg_bal, trs.min_bal, trs.max_bal, dis.dist_id, dis.dist_avg_salary, dis.dist_crimes_95, dis.dist_crimes_96, cli.client_birth_year, lns.status
+    FROM LOANS_TRAIN lns, trans_info trs, district_info dis, client_info cli
+    WHERE lns.account_id=trs.account_id AND lns.account_id=dis.account_id AND lns.account_id=cli.account_id
     ''')
 
     c.execute('''
@@ -88,8 +90,8 @@ def queries_test(c):
     ''')
 
     c.execute('''
-    CREATE VIEW IF NOT EXISTS dristrict_info AS 
-    SELECT acc.account_id as account_id, dist.average_salary as dist_avg_salary, dist.no_of_commited_crimes_95 as dist_crimes_95, dist.no_of_commited_crimes_96 as dist_crimes_96 
+    CREATE VIEW IF NOT EXISTS district_info AS 
+    SELECT acc.account_id as account_id, dist.code as dist_id, dist.average_salary as dist_avg_salary, dist.no_of_commited_crimes_95 as dist_crimes_95, dist.no_of_commited_crimes_96 as dist_crimes_96 
     FROM ACCOUNT acc, DISTRICT dist
     WHERE acc.district_id=dist.code
     ''')
@@ -102,10 +104,10 @@ def queries_test(c):
     ''')
 
     c.execute('''
-    INSERT INTO ALL_LOANS_TEST (loan_id,account_id,date,amount,duration,payments,number_trans,avg_bal,min_bal,max_bal,dist_avg_salary,dist_crimes_95,dist_crimes_96,client_birth_year,status) 
-    SELECT DISTINCT lns.loan_id, lns.account_id, lns.date, lns.amount, lns.duration, lns.payments, trs.number_trans, trs.avg_bal, trs.min_bal, trs.max_bal, drs.dist_avg_salary, drs.dist_crimes_95, drs.dist_crimes_96, cli.client_birth_year, lns.status
-    FROM LOANS_TEST lns, trans_info trs, dristrict_info drs, client_info cli
-    WHERE lns.account_id=trs.account_id AND lns.account_id=drs.account_id AND lns.account_id=cli.account_id
+    INSERT INTO ALL_LOANS_TEST (loan_id,account_id,date,amount,duration,payments,number_trans,avg_bal,min_bal,max_bal,dist_id,dist_avg_salary,dist_crimes_95,dist_crimes_96,client_birth_year,status) 
+    SELECT DISTINCT lns.loan_id, lns.account_id, lns.date, lns.amount, lns.duration, lns.payments, trs.number_trans, trs.avg_bal, trs.min_bal, trs.max_bal, dis.dist_id, dis.dist_avg_salary, dis.dist_crimes_95, dis.dist_crimes_96, cli.client_birth_year, lns.status
+    FROM LOANS_TEST lns, trans_info trs, district_info dis, client_info cli
+    WHERE lns.account_id=trs.account_id AND lns.account_id=dis.account_id AND lns.account_id=cli.account_id
     ''')
     
     c.execute('''
@@ -131,10 +133,6 @@ def convert_train():
     read_acc.head()
     read_acc.to_sql('ACCOUNT', conn, if_exists='append', index = False)
 
-    read_cards = pd.read_csv ('card_train.csv', sep=';')
-    read_cards.head()
-    read_cards.to_sql('CARD_TRAIN', conn, if_exists='append', index = False)
-
     read_clients = pd.read_csv ('client.csv', sep=';')
     read_clients.head()
     read_clients.to_sql('CLIENT', conn, if_exists='append', index = False)
@@ -150,7 +148,7 @@ def convert_train():
 
     queries_train(c)
 
-    df = DataFrame(c.fetchall(), columns=['loan_id','account_id','date','amount','duration','payments','number_trans','avg_bal','min_bal','max_bal','dist_avg_salary','dist_crimes_95','dist_crimes_96','client_birth_year','status'])
+    df = DataFrame(c.fetchall(), columns=['loan_id','account_id','date','amount','duration','payments','number_trans','avg_bal','min_bal','max_bal','dist_id','dist_avg_salary','dist_crimes_95','dist_crimes_96','client_birth_year','status'])
     export_csv = df.to_csv ('gerado_train.csv', index = None, header=True)
 
 
@@ -171,10 +169,6 @@ def convert_test():
     read_acc.head()
     read_acc.to_sql('ACCOUNT', conn, if_exists='append', index = False)
 
-    read_cards = pd.read_csv ('card_train.csv', sep=';')
-    read_cards.head()
-    read_cards.to_sql('CARD_TRAIN', conn, if_exists='append', index = False)
-
     read_clients = pd.read_csv ('client.csv', sep=';')
     read_clients.head()
     read_clients.to_sql('CLIENT', conn, if_exists='append', index = False)
@@ -189,7 +183,7 @@ def convert_test():
 
     queries_test(c)
 
-    df = DataFrame(c.fetchall(), columns=['loan_id','account_id','date','amount','duration','payments','number_trans','avg_bal','min_bal','max_bal','dist_avg_salary','dist_crimes_95','dist_crimes_96','client_birth_year','status'])
+    df = DataFrame(c.fetchall(), columns=['loan_id','account_id','date','amount','duration','payments','number_trans','avg_bal','min_bal','max_bal','dist_id','dist_avg_salary','dist_crimes_95','dist_crimes_96','client_birth_year','status'])
     export_csv = df.to_csv ('gerado_test.csv', index = None, header=True)
 # ___________________________________________________________________________________________________________________-
 
