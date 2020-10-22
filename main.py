@@ -23,10 +23,10 @@ def get_train_values():
 def get_test_values(values):
     heart = pd.read_csv('gerado_test.csv', sep=',', header=0)
     heart.head()
-    train_y = values.iloc[:,10]
-    train_x = values.iloc[:,:10]
-    test_y = heart.iloc[:,10]
-    test_x = heart.iloc[:,:10]
+    train_y = values.iloc[:,14]
+    train_x = values.iloc[:,:14]
+    test_y = heart.iloc[:,14]
+    test_x = heart.iloc[:,:14]
     loan_id = list(heart.iloc[:,0])
     account_ids = list(heart.iloc[:,1])
     return (train_x, train_y, test_x, test_y, loan_id, account_ids)
@@ -39,8 +39,8 @@ def get_accounts_negative_balance(file):
     return accounts_id
 
 def train_split_random(values):
-    values_y = values.iloc[:,10]
-    values_x = values.iloc[:,:10]
+    values_y = values.iloc[:,14]
+    values_x = values.iloc[:,:14]
     train_y, test_y = train_test_split(values_y, test_size=0.25, random_state=0, shuffle=True)
     train_x, test_x = train_test_split(values_x, test_size=0.25, random_state=0, shuffle=True)
     return(train_x, train_y, test_x, test_y)
@@ -101,6 +101,7 @@ def submission(values):
         preds[idx]=-1
     create_file(loan_id,preds)
 
+# falta fazer feature selection + smote + colunas relevantes
 # _____________________________________________________________________________________________________________
 
 values = get_train_values()
