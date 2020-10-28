@@ -2,6 +2,26 @@ import os
 import sqlite3
 import pandas as pd
 from pandas import DataFrame
+from sklearn.linear_model import LinearRegression
+
+
+def fill_missing_data():
+    heart = pd.read_csv ('district.csv', sep=';', header=0)
+    heart.head()
+    train = heart[~heart['no_of_commited_crimes_95'].str.contains('\?')]
+    test = heart[heart['no_of_commited_crimes_95'].str.contains('\?')]
+    x_train = train[train.columns.difference(['no_of_commited_crimes_95', 'unemploymant_rate_95', 'name', 'region'])]
+    y_train = train.iloc[:,14]
+    x_test = test[test.columns.difference(['no_of_commited_crimes_95', 'unemploymant_rate_95', 'name', 'region'])]
+    y_test = test.iloc[:,14]
+
+    model = LinearRegression()
+    model.fit(x_train, y_train)
+    y_pred = model.predict(x_test)[0]
+    print(y_pred)
+    dictionary = {'\?':y_pred}
+    heart.replace(dictionary, regex=True, inplace=True)
+    return heart
 
 def create_table_train(conn, c):
     c.execute('DROP TABLE IF EXISTS ALL_LOANS_TRAIN')
@@ -141,8 +161,7 @@ def convert_train():
     read_disp.head()
     read_disp.to_sql('DISP', conn, if_exists='append', index = False)
 
-    read_dist = pd.read_csv ('district.csv', sep=';')
-    read_dist.head()
+    read_dist = fill_missing_data()
     read_dist.to_sql('DISTRICT', conn, if_exists='append', index = False)
     
 
@@ -177,8 +196,7 @@ def convert_test():
     read_disp.head()
     read_disp.to_sql('DISP', conn, if_exists='append', index = False)
 
-    read_dist = pd.read_csv ('district.csv', sep=';')
-    read_dist.head()
+    read_dist = fill_missing_data()
     read_dist.to_sql('DISTRICT', conn, if_exists='append', index = False)
 
     queries_test(c)
@@ -189,6 +207,8 @@ def convert_test():
 
 
 os.chdir('data')
+
+# fill_missing_data()
 
 convert_train()
 os.remove("LoansTrain.db")

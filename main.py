@@ -31,21 +31,22 @@ def get_test_values(values):
     test_y = heart.iloc[:,15]
     test_x = heart.iloc[:,:15]
     loan_id = list(heart.iloc[:,0])
-    account_ids = list(heart.iloc[:,1])
-    return (train_x, train_y, test_x, test_y, loan_id, account_ids)
-
-def get_accounts_negative_balance(file):
-    heart = pd.read_csv(file, sep=';', header=0, low_memory=False)
-    heart.head()
-    values = heart[heart['balance'] < 0]
-    accounts_id = list(dict.fromkeys(values.iloc[:,1]))
-    return accounts_id
+    return (train_x, train_y, test_x, test_y, loan_id)
 
 def train_split_random(values):
     values_y = values.iloc[:,15]
     values_x = values.iloc[:,:15]
     train_y, test_y = train_test_split(values_y, test_size=0.25, random_state=0, shuffle=True)
     train_x, test_x = train_test_split(values_x, test_size=0.25, random_state=0, shuffle=True)
+    return(train_x, train_y, test_x, test_y)
+
+def train_split_year(values):
+    values_train=values[(values['date'] > 930000) & (values['date'] < 960000)]
+    values_test=values[values['date'] > 960000]
+    train_y = values_train.iloc[:,15]
+    train_x = values_train.iloc[:,:15]
+    test_y = values_test.iloc[:,15]
+    test_x = values_test.iloc[:,:15]
     return(train_x, train_y, test_x, test_y)
 
 def apply_gaussian(train_x, train_y, test_x): # Naive Bayes
@@ -69,7 +70,6 @@ def apply_kNeighborsClassifier(train_x, train_y, test_x): # k-nearest neighbors
     return knc.predict(test_x)
 
 def apply_randomForestClassifier(train_x, train_y, test_x): # k-nearest neighbors
-    loop = 0
     smt = SMOTE()
     train_x_SMOTE, train_y_SMOTE = smt.fit_resample(train_x, train_y)
     clf=RandomForestClassifier(n_estimators=20)
@@ -86,26 +86,14 @@ def create_file(loan_id,results):
     f.close()
 
 def test_accuracy(values):
-    neg_accounts = get_accounts_negative_balance('trans_train.csv')
-
-    train_x, train_y, test_x, test_y = train_split_random(values)
-    account_ids = list(test_x.iloc[:,1])
-    st = set(neg_accounts)
-    indexes = [i for i, e in enumerate(account_ids) if e in st]
+    train_x, train_y, test_x, test_y = train_split_year(values)
     preds = list(apply_randomForestClassifier(train_x, train_y, test_x))
-    for idx in indexes:
-        preds[idx]=-1
     print("\nauc score: " + str(roc_auc_score(test_y, preds))+ "\n")
 
 
 def submission(values):
-    train_x, train_y, test_x, test_y, loan_id, account_ids = get_test_values(values)
-    neg_accounts = get_accounts_negative_balance('trans_test.csv')    
-    st = set(neg_accounts)
-    indexes = [i for i, e in enumerate(account_ids) if e in st]
+    train_x, train_y, test_x, test_y, loan_id = get_test_values(values)
     preds = list(apply_randomForestClassifier(train_x, train_y, test_x))
-    for idx in indexes:
-        preds[idx]=-1
     create_file(loan_id,preds)
 
 # falta fazer feature selection + smote + colunas relevantes
