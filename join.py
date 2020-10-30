@@ -18,7 +18,6 @@ def fill_missing_data():
     model = LinearRegression()
     model.fit(x_train, y_train)
     y_pred = model.predict(x_test)[0]
-    print(y_pred)
     dictionary = {'\?':y_pred}
     heart.replace(dictionary, regex=True, inplace=True)
     return heart
@@ -207,8 +206,6 @@ def convert_test():
 
 
 os.chdir('data')
-
-# fill_missing_data()
 
 convert_train()
 os.remove("LoansTrain.db")

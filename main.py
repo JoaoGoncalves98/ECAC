@@ -92,9 +92,9 @@ def test_accuracy(values):
     train_x, train_y, test_x, test_y = train_split_random(values)
     preds = list(apply_randomForestClassifier(train_x, train_y, test_x))
     print("\nauc score: " + str(roc_auc_score(test_y, preds))+ "\n")
-    print("\naccuracy: " + str(accuracy_score(test_y, preds))+ "\n")
-    print("\nbalance accuracy: " + str(balanced_accuracy_score(test_y, preds))+ "\n")
-    print("\nrecall: " + str(recall_score(test_y, preds))+ "\n")
+    print("accuracy score: " + str(accuracy_score(test_y, preds))+ "\n")
+    print("recall score: " + str(recall_score(test_y, preds))+ "\n")
+    print("confusion matrix: ")
     print(confusion_matrix(test_y, preds))
 
 
@@ -103,10 +103,7 @@ def submission(values):
     preds = list(apply_randomForestClassifier(train_x, train_y, test_x))
     create_file(loan_id,preds)
 
-# falta fazer feature selection + smote + colunas relevantes
-# _____________________________________________________________________________________________________________
-
 values = get_train_values()
 
 test_accuracy(values) # Tests accuracy by using train file for train+test
-# submission(values) # Creates submission file to be submited
+submission(values) # Creates submission file to be submited
