@@ -13,6 +13,9 @@ from sklearn.feature_selection import RFECV
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import roc_auc_score
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import recall_score
+from sklearn.metrics import balanced_accuracy_score
 from imblearn.over_sampling import SMOTE
 from collections import Counter
 import csv
@@ -72,7 +75,7 @@ def apply_kNeighborsClassifier(train_x, train_y, test_x): # k-nearest neighbors
 def apply_randomForestClassifier(train_x, train_y, test_x): # k-nearest neighbors
     smt = SMOTE()
     train_x_SMOTE, train_y_SMOTE = smt.fit_resample(train_x, train_y)
-    clf=RandomForestClassifier(n_estimators=20)
+    clf=RandomForestClassifier(n_estimators=10)
     selector = RFECV(clf, scoring='roc_auc')
     selector.fit(train_x_SMOTE, train_y_SMOTE)
     return selector.predict(test_x)
@@ -86,9 +89,13 @@ def create_file(loan_id,results):
     f.close()
 
 def test_accuracy(values):
-    train_x, train_y, test_x, test_y = train_split_year(values)
+    train_x, train_y, test_x, test_y = train_split_random(values)
     preds = list(apply_randomForestClassifier(train_x, train_y, test_x))
     print("\nauc score: " + str(roc_auc_score(test_y, preds))+ "\n")
+    print("\naccuracy: " + str(accuracy_score(test_y, preds))+ "\n")
+    print("\nbalance accuracy: " + str(balanced_accuracy_score(test_y, preds))+ "\n")
+    print("\nrecall: " + str(recall_score(test_y, preds))+ "\n")
+    print(confusion_matrix(test_y, preds))
 
 
 def submission(values):
@@ -102,4 +109,4 @@ def submission(values):
 values = get_train_values()
 
 test_accuracy(values) # Tests accuracy by using train file for train+test
-submission(values) # Creates submission file to be submited
+# submission(values) # Creates submission file to be submited
